@@ -126,12 +126,13 @@
     <div class="container" id="survey-form">
         <form id="myForm">
             
-            <div class="card">
-                <div class="form-group">
-                    <label class="question-title">維修單號</label>
-                    <input type="text" id="repairId" name="repairId" value="讀取中..." readonly>
-                </div>
-            </div>
+<form id="myForm">
+    <input type="hidden" id="repairId" name="repairId">
+    <input type="hidden" id="receiver" name="receiver">
+    <input type="hidden" id="technician" name="technician">
+
+    <div class="card">
+        
 
             <div class="card">
                 <label class="question-title">請問您覺得服務人員的態度如何？<span class="required">*</span></label>
@@ -231,22 +232,18 @@
 
     <script>
         // ★★★ 請替換成你的 Google Apps Script 網址 (結尾 /exec) ★★★
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUFddDJpIkhR0kEotJBzdvvfPimcwlJCsMkCbCkwp7Ki868NyCmKnEB-BbzTNQEansfg/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/你的部署ID/exec";
         
-        // 1. 從網址讀取參數 (修復 LIFF 參數讀取)
+        // 1. 從網址讀取參數 (包含 id, r=接件人, t=主修師)
         window.onload = function() {
-            // 優先嘗試從 URL 讀取 id (GitHub Pages)
             const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
             
-            if (id) {
-                document.getElementById('repairId').value = id;
-            } else {
-                document.getElementById('repairId').value = "無編號";
-            }
+            // 填入隱藏欄位
+            document.getElementById('repairId').value = urlParams.get('id') || "無編號";
+            document.getElementById('receiver').value = urlParams.get('r') || "";
+            document.getElementById('technician').value = urlParams.get('t') || "";
             
             // 初始化 LIFF
-            // 請替換成你的 LIFF ID
             liff.init({ liffId: "2008598904-yJnqeEj3" });
         };
 
@@ -262,6 +259,8 @@
                 action: "save_survey",
                 data: {
                     id: form.repairId.value,
+                    receiver: form.receiver.value,     // ★ 新增
+                    technician: form.technician.value, // ★ 新增
                     q1: form.querySelector('input[name="q1"]:checked')?.value,
                     q2: form.querySelector('input[name="q2"]:checked')?.value,
                     q3: form.querySelector('input[name="q3"]:checked')?.value,
