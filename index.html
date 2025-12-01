@@ -2,68 +2,250 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>蘋天下 顧客問卷</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f2f7; margin: 0; padding: 20px; color: #1c1c1e; }
+        /* 全域設定：背景改為低飽和度淺藍灰 */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: #f0f4f8; 
+            margin: 0; 
+            padding: 16px; 
+            color: #333; 
+        }
+
         .container { max-width: 600px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 25px; }
-        .header h1 { font-size: 24px; margin: 0 0 10px 0; }
-        .header p { font-size: 14px; color: #6e6e73; line-height: 1.4; }
-        .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: 600; margin-bottom: 12px; font-size: 16px; }
-        .required { color: #ff3b30; margin-left: 3px; }
-        input[type="text"], textarea { width: 100%; padding: 12px; border: 1px solid #d1d1d6; border-radius: 8px; font-size: 16px; box-sizing: border-box; -webkit-appearance: none; }
-        input[readonly] { background-color: #f2f2f7; color: #8e8e93; border: none; }
-        .radio-group { display: flex; flex-direction: column; gap: 10px; }
-        .radio-option { display: flex; align-items: center; padding: 10px; border: 1px solid #e5e5ea; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
-        .radio-option:active { background-color: #f2f2f7; }
-        .radio-option input { margin-right: 12px; transform: scale(1.3); }
-        .scale-group { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-        .scale-option { text-align: center; border: 1px solid #e5e5ea; border-radius: 8px; padding: 8px 0; font-size: 14px; cursor: pointer; }
-        .scale-option input { display: block; margin: 0 auto 5px auto; }
-        .btn-submit { background-color: #007aff; color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; }
-        .btn-submit:disabled { background-color: #d1d1d6; }
+        
+        /* 卡片樣式 */
+        .card { 
+            background: #fff; 
+            border-radius: 8px; 
+            padding: 16px; 
+            margin-bottom: 16px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+        }
+
+        .form-group { margin-bottom: 10px; }
+        label.question-title { 
+            display: block; 
+            font-weight: 600; 
+            margin-bottom: 12px; 
+            font-size: 16px; 
+            color: #202124;
+        }
+        .required { color: #d93025; margin-left: 3px; }
+
+        /* 輸入框樣式 - 維修單號改為 AppSheet 風格的淡藍色底 */
+        input[type="text"], textarea { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #dadce0; 
+            border-radius: 4px; 
+            font-size: 16px; 
+            box-sizing: border-box; 
+            -webkit-appearance: none; 
+        }
+        input[readonly] { 
+            background-color: #e3f2fd; /* 很淡的淺藍色 */
+            color: #1967d2; /* 深藍色字體 */
+            border: 1px solid #d2e3fc;
+            font-weight: 500;
+        }
+
+        /* === AppSheet 風格按鈕核心 CSS === */
+        /* 隱藏原始的圓圈 radio */
+        .hidden-radio { display: none; }
+
+        /* 選項容器：垂直排列，間距收窄 */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px; /* 間隔收窄 */
+        }
+
+        /* 按鈕外觀 (Label) */
+        .btn-option {
+            display: flex;
+            justify-content: center; /* 文字水平置中 */
+            align-items: center;    /* 文字垂直置中 */
+            width: 100%;
+            padding: 14px 10px;     /* 高度拉高 */
+            background-color: #fff;
+            border: 1px solid #dadce0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            color: #3c4043;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        /* 按鈕被選中時的樣式 (模仿 AppSheet 藍) */
+        .hidden-radio:checked + .btn-option {
+            background-color: #1976d2; /* AppSheet 經典藍 */
+            color: #ffffff;
+            border-color: #1976d2;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(25, 118, 210, 0.3);
+        }
+
+        /* 1-10 分數的網格佈局 */
+        .scale-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); /* 一排5個 */
+            gap: 8px;
+        }
+        .scale-option {
+            padding: 12px 0; /* 分數按鈕高度 */
+        }
+
+        /* 送出按鈕 */
+        .btn-submit { 
+            background-color: #1976d2; 
+            color: white; 
+            border: none; 
+            padding: 16px; 
+            width: 100%; 
+            border-radius: 6px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .btn-submit:disabled { background-color: #b0bec5; }
+
+        /* 成功訊息 */
         #success-message { display: none; text-align: center; padding: 40px 20px; }
-        .check-icon { font-size: 48px; color: #34c759; margin-bottom: 20px; display: block; }
+        .check-icon { font-size: 50px; color: #34c759; margin-bottom: 20px; display: block; }
     </style>
 </head>
 <body>
+
     <div class="container" id="survey-form">
-        <div class="header">
-            <h1>蘋天下 顧客問卷</h1>
-            <p>感謝您的惠顧！為了強化我們的服務品質，<br>希望您花幾秒鐘回答以下簡短的問題。</p>
-        </div>
         <form id="myForm">
+            
             <div class="card">
                 <div class="form-group">
-                    <label>維修單號<span class="required">*</span></label>
+                    <label class="question-title">維修單號</label>
                     <input type="text" id="repairId" name="repairId" value="讀取中..." readonly>
                 </div>
             </div>
-            <div class="card"><label>請問您覺得服務人員的態度如何？<span class="required">*</span></label><div class="radio-group"><label class="radio-option"><input type="radio" name="q1" value="非常滿意" required> 非常滿意</label><label class="radio-option"><input type="radio" name="q1" value="還不錯"> 還不錯</label><label class="radio-option"><input type="radio" name="q1" value="普通"> 普通</label><label class="radio-option"><input type="radio" name="q1" value="不太行，有待加強"> 不太行，有待加強</label><label class="radio-option"><input type="radio" name="q1" value="很糟糕"> 很糟糕</label></div></div>
-            <div class="card"><label>請問您覺得服務人員的專業度如何？<span class="required">*</span></label><div class="radio-group"><label class="radio-option"><input type="radio" name="q2" value="非常專業" required> 非常專業</label><label class="radio-option"><input type="radio" name="q2" value="還不錯"> 還不錯</label><label class="radio-option"><input type="radio" name="q2" value="普通"> 普通</label><label class="radio-option"><input type="radio" name="q2" value="不太行，有待加強"> 不太行，有待加強</label><label class="radio-option"><input type="radio" name="q2" value="可能要砍掉重練"> 可能要砍掉重練</label></div></div>
-            <div class="card"><label>請問您對整個消費體驗的感覺如何？<span class="required">*</span></label><div class="radio-group"><label class="radio-option"><input type="radio" name="q3" value="非常好的體驗" required> 非常好的體驗</label><label class="radio-option"><input type="radio" name="q3" value="整體上還不錯"> 整體上還不錯</label><label class="radio-option"><input type="radio" name="q3" value="普通"> 普通</label><label class="radio-option"><input type="radio" name="q3" value="不太行，有待加強"> 不太行，有待加強</label><label class="radio-option"><input type="radio" name="q3" value="很糟糕"> 很糟糕</label></div></div>
-            <div class="card"><label>是否會推薦親友來蘋天下？<span class="required">*</span></label><p style="font-size:12px; color:#888; margin-top:-8px;">(10分:絕對會 / 0分:絕對不可能)</p><div class="scale-group"><label class="scale-option"><input type="radio" name="q4" value="10" required>10</label><label class="scale-option"><input type="radio" name="q4" value="9">9</label><label class="scale-option"><input type="radio" name="q4" value="8">8</label><label class="scale-option"><input type="radio" name="q4" value="7">7</label><label class="scale-option"><input type="radio" name="q4" value="6">6</label><label class="scale-option"><input type="radio" name="q4" value="5">5</label><label class="scale-option"><input type="radio" name="q4" value="4">4</label><label class="scale-option"><input type="radio" name="q4" value="3">3</label><label class="scale-option"><input type="radio" name="q4" value="2">2</label><label class="scale-option"><input type="radio" name="q4" value="1">1</label><label class="scale-option"><input type="radio" name="q4" value="0">0</label></div></div>
-            <div class="card"><label>意見回饋 (可留空)</label><textarea name="q5" rows="4" placeholder="歡迎您的留言"></textarea></div>
+
+            <div class="card">
+                <label class="question-title">請問您覺得服務人員的態度如何？<span class="required">*</span></label>
+                <div class="options-container">
+                    <input type="radio" name="q1" id="q1-1" value="非常滿意" class="hidden-radio" required>
+                    <label for="q1-1" class="btn-option">非常滿意</label>
+
+                    <input type="radio" name="q1" id="q1-2" value="還不錯" class="hidden-radio">
+                    <label for="q1-2" class="btn-option">還不錯</label>
+
+                    <input type="radio" name="q1" id="q1-3" value="普通" class="hidden-radio">
+                    <label for="q1-3" class="btn-option">普通</label>
+
+                    <input type="radio" name="q1" id="q1-4" value="不太行，有待加強" class="hidden-radio">
+                    <label for="q1-4" class="btn-option">不太行，有待加強</label>
+
+                    <input type="radio" name="q1" id="q1-5" value="很糟糕" class="hidden-radio">
+                    <label for="q1-5" class="btn-option">很糟糕</label>
+                </div>
+            </div>
+
+            <div class="card">
+                <label class="question-title">請問您覺得服務人員的專業度如何？<span class="required">*</span></label>
+                <div class="options-container">
+                    <input type="radio" name="q2" id="q2-1" value="非常專業" class="hidden-radio" required>
+                    <label for="q2-1" class="btn-option">非常專業</label>
+
+                    <input type="radio" name="q2" id="q2-2" value="還不錯" class="hidden-radio">
+                    <label for="q2-2" class="btn-option">還不錯</label>
+
+                    <input type="radio" name="q2" id="q2-3" value="普通" class="hidden-radio">
+                    <label for="q2-3" class="btn-option">普通</label>
+
+                    <input type="radio" name="q2" id="q2-4" value="不太行，有待加強" class="hidden-radio">
+                    <label for="q2-4" class="btn-option">不太行，有待加強</label>
+
+                    <input type="radio" name="q2" id="q2-5" value="可能要砍掉重練" class="hidden-radio">
+                    <label for="q2-5" class="btn-option">可能要砍掉重練</label>
+                </div>
+            </div>
+
+            <div class="card">
+                <label class="question-title">請問您對整個消費體驗的感覺如何？<span class="required">*</span></label>
+                <div class="options-container">
+                    <input type="radio" name="q3" id="q3-1" value="非常好的體驗" class="hidden-radio" required>
+                    <label for="q3-1" class="btn-option">非常好的體驗</label>
+
+                    <input type="radio" name="q3" id="q3-2" value="整體上還不錯" class="hidden-radio">
+                    <label for="q3-2" class="btn-option">整體上還不錯</label>
+
+                    <input type="radio" name="q3" id="q3-3" value="普通" class="hidden-radio">
+                    <label for="q3-3" class="btn-option">普通</label>
+
+                    <input type="radio" name="q3" id="q3-4" value="不太行，有待加強" class="hidden-radio">
+                    <label for="q3-4" class="btn-option">不太行，有待加強</label>
+
+                    <input type="radio" name="q3" id="q3-5" value="很糟糕" class="hidden-radio">
+                    <label for="q3-5" class="btn-option">很糟糕</label>
+                </div>
+            </div>
+
+            <div class="card">
+                <label class="question-title">是否會推薦親友來蘋天下？<span class="required">*</span></label>
+                <p style="font-size:13px; color:#666; margin-top:-8px; margin-bottom: 12px;">(10分:絕對會 / 1分:絕對不可能)</p>
+                
+                <div class="scale-grid">
+                    <input type="radio" name="q4" id="s10" value="10" class="hidden-radio" required><label for="s10" class="btn-option scale-option">10</label>
+                    <input type="radio" name="q4" id="s9" value="9" class="hidden-radio"><label for="s9" class="btn-option scale-option">9</label>
+                    <input type="radio" name="q4" id="s8" value="8" class="hidden-radio"><label for="s8" class="btn-option scale-option">8</label>
+                    <input type="radio" name="q4" id="s7" value="7" class="hidden-radio"><label for="s7" class="btn-option scale-option">7</label>
+                    <input type="radio" name="q4" id="s6" value="6" class="hidden-radio"><label for="s6" class="btn-option scale-option">6</label>
+                    
+                    <input type="radio" name="q4" id="s5" value="5" class="hidden-radio"><label for="s5" class="btn-option scale-option">5</label>
+                    <input type="radio" name="q4" id="s4" value="4" class="hidden-radio"><label for="s4" class="btn-option scale-option">4</label>
+                    <input type="radio" name="q4" id="s3" value="3" class="hidden-radio"><label for="s3" class="btn-option scale-option">3</label>
+                    <input type="radio" name="q4" id="s2" value="2" class="hidden-radio"><label for="s2" class="btn-option scale-option">2</label>
+                    <input type="radio" name="q4" id="s1" value="1" class="hidden-radio"><label for="s1" class="btn-option scale-option">1</label>
+                </div>
+            </div>
+
+            <div class="card">
+                <label class="question-title">意見回饋 (可留空)</label>
+                <textarea name="q5" rows="3" placeholder="歡迎您的留言"></textarea>
+            </div>
+
             <button type="submit" id="btnSubmit" class="btn-submit">送出問卷</button>
         </form>
     </div>
-    <div class="container" id="success-message"><div class="card"><span class="check-icon">✅</span><h2>感謝您的回饋！</h2><p>您的寶貴意見將幫助我們變得更好。</p></div></div>
+
+    <div class="container" id="success-message">
+        <div class="card" style="text-align: center; padding: 40px 20px;">
+            <span class="check-icon">✅</span>
+            <h2>感謝您的回饋！</h2>
+            <p>您的意見是我們進步的動力。</p>
+        </div>
+    </div>
 
     <script>
-        // ★★★ 請替換成你的 Google Apps Script 網址 ★★★
+        // ★★★ 請替換成你的 Google Apps Script 網址 (結尾 /exec) ★★★
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUFddDJpIkhR0kEotJBzdvvfPimcwlJCsMkCbCkwp7Ki868NyCmKnEB-BbzTNQEansfg/exec";
         
-        // 1. 從網址讀取參數 (絕對有效)
+        // 1. 從網址讀取參數 (修復 LIFF 參數讀取)
         window.onload = function() {
+            // 優先嘗試從 URL 讀取 id (GitHub Pages)
             const urlParams = new URLSearchParams(window.location.search);
             const id = urlParams.get('id');
-            document.getElementById('repairId').value = id ? id : "無編號";
             
-            // 初始化 LIFF (為了關閉視窗用)
+            if (id) {
+                document.getElementById('repairId').value = id;
+            } else {
+                document.getElementById('repairId').value = "無編號";
+            }
+            
+            // 初始化 LIFF
             // 請替換成你的 LIFF ID
             liff.init({ liffId: "2008598904-yJnqeEj3" });
         };
@@ -77,7 +259,7 @@
 
             const form = e.target;
             const data = {
-                action: "save_survey", // 告訴後端這是問卷
+                action: "save_survey",
                 data: {
                     id: form.repairId.value,
                     q1: form.querySelector('input[name="q1"]:checked')?.value,
@@ -88,7 +270,6 @@
                 }
             };
 
-            // 使用 fetch 送出 POST 請求
             fetch(SCRIPT_URL, {
                 method: 'POST',
                 body: JSON.stringify(data)
