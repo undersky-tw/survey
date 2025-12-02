@@ -71,6 +71,7 @@
             <input type="hidden" id="repairId" name="repairId">
             <input type="hidden" id="receiver" name="receiver">
             <input type="hidden" id="technician" name="technician">
+            <input type="hidden" id="handover" name="handover">
 
             <div class="card"><label class="question-title">請問您覺得服務人員的態度如何？<span class="required">*</span></label><div class="options-container"><input type="radio" name="q1" id="q1-1" value="非常滿意" class="hidden-radio" required><label for="q1-1" class="btn-option">非常滿意</label><input type="radio" name="q1" id="q1-2" value="還不錯" class="hidden-radio"><label for="q1-2" class="btn-option">還不錯</label><input type="radio" name="q1" id="q1-3" value="普通" class="hidden-radio"><label for="q1-3" class="btn-option">普通</label><input type="radio" name="q1" id="q1-4" value="不太行，有待加強" class="hidden-radio"><label for="q1-4" class="btn-option">不太行，有待加強</label><input type="radio" name="q1" id="q1-5" value="很糟糕" class="hidden-radio"><label for="q1-5" class="btn-option">很糟糕</label></div></div>
             <div class="card"><label class="question-title">請問您覺得服務人員的專業度如何？<span class="required">*</span></label><div class="options-container"><input type="radio" name="q2" id="q2-1" value="非常專業" class="hidden-radio" required><label for="q2-1" class="btn-option">非常專業</label><input type="radio" name="q2" id="q2-2" value="還不錯" class="hidden-radio"><label for="q2-2" class="btn-option">還不錯</label><input type="radio" name="q2" id="q2-3" value="普通" class="hidden-radio"><label for="q2-3" class="btn-option">普通</label><input type="radio" name="q2" id="q2-4" value="不太行，有待加強" class="hidden-radio"><label for="q2-4" class="btn-option">不太行，有待加強</label><input type="radio" name="q2" id="q2-5" value="可能要砍掉重練" class="hidden-radio"><label for="q2-5" class="btn-option">可能要砍掉重練</label></div></div>
@@ -139,6 +140,7 @@
             document.getElementById('repairId').value = urlParams.get('id') || "無編號";
             document.getElementById('receiver').value = urlParams.get('r') || "";
             document.getElementById('technician').value = urlParams.get('t') || "";
+            document.getElementById('handover').value = urlParams.get('h') || ""; // ★ 新增交機者
             
             // 切換畫面
             document.getElementById('loading').style.display = 'none';
@@ -157,6 +159,7 @@
                     id: form.repairId.value,
                     receiver: form.receiver.value,
                     technician: form.technician.value,
+                    handover: form.handover.value, // ★ 新增交機者
                     q1: form.querySelector('input[name="q1"]:checked')?.value,
                     q2: form.querySelector('input[name="q2"]:checked')?.value,
                     q3: form.querySelector('input[name="q3"]:checked')?.value,
