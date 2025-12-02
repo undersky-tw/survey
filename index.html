@@ -177,9 +177,14 @@
         });
 
         function showSuccess() {
-            document.getElementById('survey-form').style.display = 'none';
-            document.getElementById('success-message').style.display = 'block';
-            setTimeout(() => { if(liff.isInClient()) liff.closeWindow(); }, 3000);
+            // 如果是 LINE 內部瀏覽器 (LIFF)，直接關閉視窗，略過感謝頁面
+            if (liff.isInClient()) {
+                liff.closeWindow();
+            } else {
+                // 如果是外部瀏覽器 (如 Chrome/Safari)，因為無法強制關閉，所以維持顯示感謝頁面
+                document.getElementById('survey-form').style.display = 'none';
+                document.getElementById('success-message').style.display = 'block';
+            }
         }
     </script>
 </body>
