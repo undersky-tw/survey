@@ -149,8 +149,6 @@
         document.getElementById('myForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const btn = document.getElementById('btnSubmit');
-            btn.disabled = true;
-            btn.innerText = "資料傳送中...";
 
             const form = e.target;
             const data = {
@@ -166,11 +164,29 @@
                     q5: form.querySelector('textarea[name="q5"]').value
                 }
             };
+            
+            const jsonString = JSON.stringify(data);
+
+            // ★ 極速模式：如果是 LIFF，嘗試使用 sendBeacon 背景傳送並直接關閉
+            // 這能讓使用者感覺「秒關」，不需等待伺服器回應
+            if (liff.isInClient() && navigator.sendBeacon) {
+                const blob = new Blob([jsonString], { type: 'text/plain; charset=utf-8' });
+                const isQueued = navigator.sendBeacon(SCRIPT_URL, blob);
+                
+                if (isQueued) {
+                    liff.closeWindow();
+                    return; 
+                }
+            }
+
+            // ★ 一般模式：非 LIFF 或 sendBeacon 失敗時，顯示讀取中並等待回應
+            btn.disabled = true;
+            btn.innerText = "資料傳送中...";
 
             fetch(SCRIPT_URL, {
                 method: 'POST',
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(data)
+                body: jsonString
             })
             .then(() => showSuccess())
             .catch(err => { console.error(err); showSuccess(); });
