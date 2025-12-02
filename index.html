@@ -10,7 +10,7 @@
 
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background-color: #dce3e8; /* ★ 修改：加深的灰藍色背景 */
+            background-color: #dce3e8;
             margin: 0; 
             padding: 16px; 
             color: #333; 
@@ -23,96 +23,48 @@
             border-radius: 10px; 
             padding: 18px; 
             margin-bottom: 16px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08); /* 陰影稍微加深一點點以配合深底色 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
         }
 
         .form-group { margin-bottom: 10px; }
-        label.question-title { 
-            display: block; 
-            font-weight: 600; 
-            margin-bottom: 12px; 
-            font-size: 16px; 
-            color: #37474f; 
-        }
+        label.question-title { display: block; font-weight: 600; margin-bottom: 12px; font-size: 16px; color: #37474f; }
         .required { color: #d32f2f; margin-left: 3px; }
 
-        input[type="text"], textarea { 
-            width: 100%; 
-            padding: 12px; 
-            border: 1px solid #cfd8dc; 
-            border-radius: 6px; 
-            font-size: 16px; 
-            box-sizing: border-box; 
-            -webkit-appearance: none; 
-            background-color: #fff;
-        }
-        
-        input[readonly] { 
-            background-color: #eceff1; 
-            color: #546e7a; 
-            border: 1px solid #cfd8dc;
-            font-weight: 500;
-        }
+        input[type="text"], textarea { width: 100%; padding: 12px; border: 1px solid #cfd8dc; border-radius: 6px; font-size: 16px; box-sizing: border-box; -webkit-appearance: none; background-color: #fff; }
+        input[readonly] { background-color: #eceff1; color: #546e7a; border: 1px solid #cfd8dc; font-weight: 500; }
 
         .hidden-radio { display: none; }
+        .options-container { display: flex; flex-direction: column; gap: 10px; }
+        .btn-option { display: flex; justify-content: center; align-items: center; width: 100%; padding: 14px 10px; background-color: #fff; border: 1px solid #cfd8dc; border-radius: 6px; cursor: pointer; font-size: 15px; color: #455a64; transition: background-color 0.1s, border-color 0.1s; box-sizing: border-box; text-align: center; }
+        .hidden-radio:checked + .btn-option { background-color: #455a64; color: #ffffff; border-color: #455a64; font-weight: 600; box-shadow: 0 2px 4px rgba(69, 90, 100, 0.2); }
 
-        .options-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px; 
-        }
-
-        .btn-option {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            padding: 14px 10px;
-            background-color: #fff;
-            border: 1px solid #cfd8dc; 
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 15px;
-            color: #455a64; 
-            transition: background-color 0.1s, border-color 0.1s; 
-            box-sizing: border-box;
-            text-align: center;
-        }
-
-        .hidden-radio:checked + .btn-option {
-            background-color: #455a64; 
-            color: #ffffff;
-            border-color: #455a64;
-            font-weight: 600;
-            box-shadow: 0 2px 4px rgba(69, 90, 100, 0.2);
-        }
-
-        .scale-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-        }
+        .scale-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
         .scale-option { padding: 12px 0; }
 
-        .btn-submit { 
-            background-color: #455a64; 
-            color: white; 
-            border: none; 
-            padding: 16px; 
-            width: 100%; 
-            border-radius: 6px; 
-            font-size: 16px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-        }
+        .btn-submit { background-color: #455a64; color: white; border: none; padding: 16px; width: 100%; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
         .btn-submit:disabled { background-color: #b0bec5; }
 
+        /* 預設隱藏區塊 */
+        #survey-form { display: none; }
         #success-message { display: none; text-align: center; padding: 40px 20px; }
+        #error-message { display: none; text-align: center; padding: 40px 20px; }
+        #loading { text-align: center; padding: 50px; color: #546e7a; font-weight: bold; }
+
         .check-icon { font-size: 50px; color: #455a64; margin-bottom: 20px; display: block; }
+        .error-icon { font-size: 50px; color: #d32f2f; margin-bottom: 20px; display: block; }
     </style>
 </head>
 <body>
+
+    <div id="loading">檢查身份中...</div>
+
+    <div class="container" id="error-message">
+        <div class="card">
+            <span class="error-icon">🔒</span>
+            <h2>無法存取</h2>
+            <p>您沒有權限填寫此問卷，<br>或是連結已失效。</p>
+        </div>
+    </div>
 
     <div class="container" id="survey-form">
         <form id="myForm">
@@ -140,16 +92,60 @@
 
     <script>
         // ★★★ 請替換成你的 Google Apps Script 網址 (結尾 /exec) ★★★
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUFddDJpIkhR0kEotJBzdvvfPimcwlJCsMkCbCkwp7Ki868NyCmKnEB-BbzTNQEansfg/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/你的部署ID/exec";
         
+        // 1. 初始化 LIFF 並檢查身份
         window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
+            // 初始化 LIFF
+            liff.init({ liffId: "2008598904-yJnqeEj3" })
+            .then(() => {
+                if (!liff.isLoggedIn()) {
+                    liff.login(); // 如果沒登入，強制登入
+                    return;
+                }
+                
+                // 取得網址參數
+                const urlParams = new URLSearchParams(window.location.search);
+                const allowedUid = urlParams.get('uid');
+                
+                // 取得目前使用者資料
+                liff.getProfile()
+                .then(profile => {
+                    const currentUserId = profile.userId;
+                    
+                    // ★ 身份驗證邏輯 ★
+                    // 如果網址有指定 uid，且與當前使用者不符，就擋住
+                    if (allowedUid && allowedUid !== currentUserId) {
+                        document.getElementById('loading').style.display = 'none';
+                        document.getElementById('error-message').style.display = 'block';
+                    } else {
+                        // 驗證通過，或網址沒有鎖定 uid (相容舊連結)
+                        showForm(urlParams);
+                    }
+                })
+                .catch(err => {
+                    console.error("LIFF Profile Error:", err);
+                    // 如果取不到個資，保守起見先顯示表單，或者也可以選擇報錯
+                    showForm(urlParams);
+                });
+            })
+            .catch(err => {
+                console.error("LIFF Init Error:", err);
+            });
+        };
+
+        function showForm(urlParams) {
+            // 填入隱藏欄位
             document.getElementById('repairId').value = urlParams.get('id') || "無編號";
             document.getElementById('receiver').value = urlParams.get('r') || "";
             document.getElementById('technician').value = urlParams.get('t') || "";
-            liff.init({ liffId: "2008598904-yJnqeEj3" });
-        };
+            
+            // 切換畫面
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('survey-form').style.display = 'block';
+        }
 
+        // 2. 送出表單
         document.getElementById('myForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const btn = document.getElementById('btnSubmit');
@@ -171,7 +167,6 @@
                 }
             };
 
-            // 使用 no-cors 解決 iOS 跨域問題
             fetch(SCRIPT_URL, {
                 method: 'POST',
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
