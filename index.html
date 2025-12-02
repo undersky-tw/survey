@@ -177,7 +177,12 @@
                 const isQueued = navigator.sendBeacon(SCRIPT_URL, blob);
                 
                 if (isQueued) {
-                    liff.closeWindow();
+                    // 修改：為了讓使用者有反應時間，延遲 2 秒後再關閉
+                    btn.disabled = true;
+                    btn.innerText = "送出成功！";
+                    setTimeout(() => {
+                        liff.closeWindow();
+                    }, 2000);
                     return; 
                 }
             }
