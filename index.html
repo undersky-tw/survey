@@ -50,7 +50,6 @@
         #error-message { display: none; text-align: center; padding: 40px 20px; }
         #loading { text-align: center; padding: 50px; color: #546e7a; font-weight: bold; }
 
-        .check-icon { font-size: 50px; color: #455a64; margin-bottom: 20px; display: block; }
         .error-icon { font-size: 50px; color: #d32f2f; margin-bottom: 20px; display: block; }
     </style>
 </head>
@@ -86,15 +85,14 @@
 
     <div class="container" id="success-message">
         <div class="card" style="text-align: center; padding: 40px 20px;">
-            <span class="check-icon">✅</span>
             <h2>問卷已送出，感謝您 👍🏻</h2>
-            <div id="review-request" style="display: none; margin-top: 20px; text-align: left;">
-                <p style="color: #37474f; line-height: 1.8; font-size: 15px;">
+            <div id="review-request" style="display: none; margin-top: 20px;">
+                <p style="color: #37474f; line-height: 1.8; font-size: 15px; text-align: left;">
                     若您滿意這次的服務，可以幫我們點亮五顆星星，並寫下您維修的機型、項目，以及體驗感受嗎？這會對我們有莫大的幫助！🌟
                 </p>
                 <a id="google-map-link" href="#" target="_blank" 
-                   style="display: inline-block; margin-top: 15px; padding: 14px 24px; background-color: #4285f4; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
-                    前往 Google 評論 ⭐
+                   style="display: block; margin: 20px auto 0; padding: 14px 24px; background-color: #4285f4; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.15); width: fit-content;">
+                    前往 Google 評論
                 </a>
             </div>
         </div>
@@ -192,17 +190,25 @@
             
             const jsonString = JSON.stringify(data);
 
-            // ★ 新流程：不再使用極速模式，統一等待回應後再顯示感謝頁面
+            // ★ 樂觀更新：立即顯示感謝頁面，不等待伺服器回應
             btn.disabled = true;
-            btn.innerText = "資料傳送中...";
+            btn.innerText = "送出中...";
+            
+            // 立即顯示感謝頁面（視覺上更快）
+            showSuccess();
 
-            fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: jsonString
-            })
-            .then(() => showSuccess())
-            .catch(err => { console.error(err); showSuccess(); });
+            // 在背景傳送資料（不阻擋 UI）
+            // 優先使用 sendBeacon（更可靠），失敗才用 fetch
+            if (navigator.sendBeacon) {
+                const blob = new Blob([jsonString], { type: 'text/plain; charset=utf-8' });
+                navigator.sendBeacon(SCRIPT_URL, blob);
+            } else {
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: jsonString
+                }).catch(err => console.error('背景傳送失敗:', err));
+            }
         });
 
         function showSuccess() {
