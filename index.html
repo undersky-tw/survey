@@ -88,7 +88,7 @@
             <h2>問卷已送出，感謝您 👍🏻</h2>
             <div id="review-request" style="display: none; margin-top: 20px;">
                 <p style="color: #37474f; line-height: 1.8; font-size: 15px; text-align: left;">
-                    若您滿意這次的服務，可否幫我們點亮五顆星星，並寫下您維修的機型、項目，以及體驗感受嗎？這會對我們有莫大的幫助！🌟
+                    若您滿意這次的服務，可以幫我們點亮五顆星星，並寫下您維修的機型、項目，以及體驗感受嗎？這會對我們有莫大的幫助！🌟
                 </p>
                 <a id="google-map-link" href="#" target="_blank" 
                    style="display: block; margin: 20px auto 0; padding: 14px 24px; background-color: #4285f4; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.15); width: fit-content;">
@@ -102,43 +102,21 @@
         // ★★★ 請替換成你的 Google Apps Script 網址 (結尾 /exec) ★★★
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUFddDJpIkhR0kEotJBzdvvfPimcwlJCsMkCbCkwp7Ki868NyCmKnEB-BbzTNQEansfg/exec";
         
-        // 1. 初始化 LIFF 並檢查身份
+        // 1. 初始化 LIFF（取消身份驗證）
         window.onload = function() {
+            // 取得網址參數
+            const urlParams = new URLSearchParams(window.location.search);
+            
             // 初始化 LIFF
             liff.init({ liffId: "2008598904-yJnqeEj3" })
             .then(() => {
-                if (!liff.isLoggedIn()) {
-                    liff.login(); // 如果沒登入，強制登入
-                    return;
-                }
-                
-                // 取得網址參數
-                const urlParams = new URLSearchParams(window.location.search);
-                const allowedUid = urlParams.get('uid');
-                
-                // 取得目前使用者資料
-                liff.getProfile()
-                .then(profile => {
-                    const currentUserId = profile.userId;
-                    
-                    // ★ 身份驗證邏輯 ★
-                    // 如果網址有指定 uid，且與當前使用者不符，就擋住
-                    if (allowedUid && allowedUid !== currentUserId) {
-                        document.getElementById('loading').style.display = 'none';
-                        document.getElementById('error-message').style.display = 'block';
-                    } else {
-                        // 驗證通過，或網址沒有鎖定 uid (相容舊連結)
-                        showForm(urlParams);
-                    }
-                })
-                .catch(err => {
-                    console.error("LIFF Profile Error:", err);
-                    // 如果取不到個資，保守起見先顯示表單，或者也可以選擇報錯
-                    showForm(urlParams);
-                });
+                // ★ 取消身份驗證：直接顯示表單
+                showForm(urlParams);
             })
             .catch(err => {
                 console.error("LIFF Init Error:", err);
+                // LIFF 初始化失敗也直接顯示表單（容錯）
+                showForm(urlParams);
             });
         };
 
