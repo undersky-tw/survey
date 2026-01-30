@@ -87,8 +87,16 @@
     <div class="container" id="success-message">
         <div class="card" style="text-align: center; padding: 40px 20px;">
             <span class="check-icon">✅</span>
-            <h2>感謝您的回饋！</h2>
-            <p style="color: #666;">您的意見是我們進步的動力。</p>
+            <h2>問卷已送出，感謝您 👍🏻</h2>
+            <div id="review-request" style="display: none; margin-top: 20px; text-align: left;">
+                <p style="color: #37474f; line-height: 1.8; font-size: 15px;">
+                    若您滿意這次的服務，可以幫我們點亮五顆星星，並寫下您維修的機型、項目，以及體驗感受嗎？這會對我們有莫大的幫助！🌟
+                </p>
+                <a id="google-map-link" href="#" target="_blank" 
+                   style="display: inline-block; margin-top: 15px; padding: 14px 24px; background-color: #4285f4; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+                    前往 Google 評論 ⭐
+                </a>
+            </div>
         </div>
     </div>
 
@@ -136,12 +144,24 @@
             });
         };
 
+        // 店別對應的 Google Map 連結
+        const SHOP_MAP_URLS = {
+            "🗿 鳳山": "https://maps.app.goo.gl/wnfzHWXnzYiLtkZR6",
+            "🌲 明誠": "https://maps.app.goo.gl/7bEH7M5W4vjRCdiS6",
+            "🐋 苓雅": "https://maps.app.goo.gl/yECYBxPL7R5SWR9RA"
+        };
+
+        let currentShopName = ""; // 用來儲存當前店別
+
         function showForm(urlParams) {
             // 填入隱藏欄位
             document.getElementById('repairId').value = urlParams.get('id') || "無編號";
             document.getElementById('receiver').value = urlParams.get('r') || "";
             document.getElementById('technician').value = urlParams.get('t') || "";
             document.getElementById('handover').value = urlParams.get('h') || ""; // ★ 新增交機者
+            
+            // ★ 新增：儲存店別資訊（用於後續顯示 Google Map 連結）
+            currentShopName = urlParams.get('shop') || "";
             
             // 切換畫面
             document.getElementById('loading').style.display = 'none';
@@ -172,24 +192,7 @@
             
             const jsonString = JSON.stringify(data);
 
-            // ★ 極速模式：如果是 LIFF，嘗試使用 sendBeacon 背景傳送並直接關閉
-            // 這能讓使用者感覺「秒關」，不需等待伺服器回應
-            if (liff.isInClient() && navigator.sendBeacon) {
-                const blob = new Blob([jsonString], { type: 'text/plain; charset=utf-8' });
-                const isQueued = navigator.sendBeacon(SCRIPT_URL, blob);
-                
-                if (isQueued) {
-                    // 修改：為了讓使用者有反應時間，延遲 2 秒後再關閉
-                    btn.disabled = true;
-                    btn.innerText = "送出成功！";
-                    setTimeout(() => {
-                        liff.closeWindow();
-                    }, 2000);
-                    return; 
-                }
-            }
-
-            // ★ 一般模式：非 LIFF 或 sendBeacon 失敗時，顯示讀取中並等待回應
+            // ★ 新流程：不再使用極速模式，統一等待回應後再顯示感謝頁面
             btn.disabled = true;
             btn.innerText = "資料傳送中...";
 
@@ -203,14 +206,50 @@
         });
 
         function showSuccess() {
-            // 如果是 LINE 內部瀏覽器 (LIFF)，直接關閉視窗，略過感謝頁面
-            if (liff.isInClient()) {
-                liff.closeWindow();
+            // ★ 新流程：取得推薦分數
+            const recommendScore = parseInt(document.querySelector('input[name="q5"]:checked')?.value || 0);
+            
+            // 切換到感謝頁面
+            document.getElementById('survey-form').style.display = 'none';
+            document.getElementById('success-message').style.display = 'block';
+            
+            // 如果推薦分數 >= 8，顯示 Google 評論邀請
+            if (recommendScore >= 8) {
+                const mapUrl = getShopMapUrl(currentShopName);
+                if (mapUrl) {
+                    document.getElementById('review-request').style.display = 'block';
+                    document.getElementById('google-map-link').href = mapUrl;
+                }
+                // 不自動關閉視窗，讓使用者可以點擊連結
             } else {
-                // 如果是外部瀏覽器 (如 Chrome/Safari)，因為無法強制關閉，所以維持顯示感謝頁面
-                document.getElementById('survey-form').style.display = 'none';
-                document.getElementById('success-message').style.display = 'block';
+                // 推薦分數 < 8，只顯示感謝訊息，3 秒後自動關閉
+                setTimeout(() => {
+                    if (liff.isInClient()) {
+                        liff.closeWindow();
+                    }
+                }, 3000);
             }
+        }
+
+        // 根據店別取得對應的 Google Map 連結
+        function getShopMapUrl(shopName) {
+            // 先嘗試完全匹配
+            if (SHOP_MAP_URLS[shopName]) {
+                return SHOP_MAP_URLS[shopName];
+            }
+            // 如果沒有完全匹配，嘗試部分匹配（容錯）
+            for (const key in SHOP_MAP_URLS) {
+                if (shopName.includes("鳳山") || key.includes(shopName)) {
+                    return SHOP_MAP_URLS["🗿 鳳山"];
+                }
+                if (shopName.includes("明誠") || key.includes(shopName)) {
+                    return SHOP_MAP_URLS["🌲 明誠"];
+                }
+                if (shopName.includes("苓雅") || key.includes(shopName)) {
+                    return SHOP_MAP_URLS["🐋 苓雅"];
+                }
+            }
+            return null;
         }
     </script>
 </body>
